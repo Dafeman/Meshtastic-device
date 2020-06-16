@@ -14,18 +14,21 @@ bool SX1262Interface::init()
 {
     RadioLibInterface::init();
 
-#ifdef SX1262_RXEN // set not rx or tx mode
+#ifdef SX1262_TXEN // set not rx or tx mode
     pinMode(SX1262_RXEN, OUTPUT);
     pinMode(SX1262_TXEN, OUTPUT);
     digitalWrite(SX1262_RXEN, LOW);
     digitalWrite(SX1262_TXEN, LOW);
+#elif defined(SX1262_DIO2_TXEN) // if our module doesn't use TXEN (likely uses DIO2 as internal control of TXEN)
+    pinMode(SX1262_RXEN, OUTPUT);
+    digitalWrite(SX1262_RXEN, HIGH);
 #endif
 
 #ifndef SX1262_E22
     float tcxoVoltage = 0; // None - we use an XTAL
 #else
     float tcxoVoltage =
-        2.4; // E22 uses DIO3 to power tcxo per https://github.com/jgromes/RadioLib/issues/12#issuecomment-520695575
+        1.8; // E22 uses DIO3 to power tcxo per https://github.com/jgromes/RadioLib/issues/12#issuecomment-520695575
 #endif
     bool useRegulatorLDO = false; // Seems to depend on the connection to pin 9/DCC_SW - if an inductor DCDC?
 
@@ -35,10 +38,13 @@ bool SX1262Interface::init()
     int res = lora.begin(freq, bw, sf, cr, syncWord, power, currentLimit, preambleLength, tcxoVoltage, useRegulatorLDO);
     DEBUG_MSG("LORA init result %d\n", res);
 
-#ifdef SX1262_RXEN
+#ifdef SX1262_TXEN
     // lora.begin assumes Dio2 is RF switch control, which is not true if we are manually controlling RX and TX
     if (res == ERR_NONE)
         res = lora.setDio2AsRfSwitch(false);
+#elif defined(SX1262_DIO2_TXEN)
+    if (res == ERR_NONE)
+        res = lora.setDio2AsRfSwitch(true);
 #endif
 
     if (res == ERR_NONE)
@@ -99,9 +105,11 @@ void SX1262Interface::setStandby()
     int err = lora.standby();
     assert(err == ERR_NONE);
 
-#ifdef SX1262_RXEN // we have RXEN/TXEN control - turn off RX and TX power
+#ifdef SX1262_TXEN // we have RXEN/TXEN control - turn off RX and TX power
     digitalWrite(SX1262_RXEN, LOW);
     digitalWrite(SX1262_TXEN, LOW);
+#elif defined(SX1262_DIO2_TXEN)
+    digitalWrite(SX1262_RXEN, LOW);
 #endif
 
     isReceiving = false; // If we were receiving, not any more
@@ -122,9 +130,11 @@ void SX1262Interface::addReceiveMetadata(MeshPacket *mp)
  */
 void SX1262Interface::startSend(MeshPacket *txp)
 {
-#ifdef SX1262_RXEN // we have RXEN/TXEN control - turn on TX power / off RX power
+#ifdef SX1262_TXEN // we have RXEN/TXEN control - turn on TX power / off RX power
     digitalWrite(SX1262_RXEN, LOW);
     digitalWrite(SX1262_TXEN, HIGH);
+#elif defined(SX1262_DIO2_TXEN)
+    digitalWrite(SX1262_RXEN, LOW);
 #endif
 
     RadioLibInterface::startSend(txp);
@@ -139,9 +149,11 @@ void SX1262Interface::startReceive()
     sleep();
 #else
 
-#ifdef SX1262_RXEN // we have RXEN/TXEN control - turn on RX power / off TX power
+#ifdef SX1262_TXEN // we have RXEN/TXEN control - turn on RX power / off TX power
     digitalWrite(SX1262_RXEN, HIGH);
     digitalWrite(SX1262_TXEN, LOW);
+#elif defined(SX1262_DIO2_TXEN)
+    digitalWrite(SX1262_RXEN, HIGH);
 #endif
 
     setStandby();

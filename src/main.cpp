@@ -134,6 +134,14 @@ void setup()
 #ifdef DEBUG_PORT
     DEBUG_PORT.init(); // Set serial baud rate and init our mesh console
 #endif
+  
+#ifdef GPS_LORA_POWER
+    //switch the high side power driver ON to enable the GPS and LoRa module
+    pinMode(GPS_LORA_POWER, OUTPUT);
+    digitalWrite(GPS_LORA_POWER, 1);
+    DEBUG_MSG("GPS and LoRa powered ON\n");
+    delay(500); // gives the GPS time to initialise.
+#endif
 
     initDeepSleep();
 

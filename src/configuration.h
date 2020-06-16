@@ -110,7 +110,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // Flip the screen upside down by default as it makes more sense on T-BEAM
 // devices. Comment this out to not rotate screen 180 degrees.
-#define FLIP_SCREEN_VERTICALLY
+//#define FLIP_SCREEN_VERTICALLY
 
 // DEBUG LED
 #define LED_INVERTED 0 // define as 1 if LED is active low (on)
@@ -143,6 +143,45 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define PMU_IRQ 35
 
 #define AXP192_SLAVE_ADDRESS 0x34
+
+#elif defined(DAVE)
+// This string must exactly match the case used in release file names or the android updater won't work
+#define HW_VENDOR "dave"
+
+// #define BUTTON_NEED_PULLUP // if set we need to turn on the internal CPU pullup during sleep
+
+#define I2C_SDA 21
+#define I2C_SCL 22
+
+#define BUTTON_PIN 15
+#define BUTTON_PIN_L 34
+#define BUTTON_PIN_R 39
+#define BUTTON_PIN_U 35
+#define BUTTON_PIN_D 36
+
+#define GPS_LORA_POWER 26
+
+#define SX1262_CS 5
+#define SX1262_DIO1 14
+#define SX1262_RESET 13
+#define SX1262_BUSY 33
+#define SX1262_RXEN 12
+#define SX1262_DIO2_TXEN
+#define SX1262_E22
+
+// This board has different GPS pins than all other boards
+#undef GPS_RX_PIN
+#undef GPS_TX_PIN
+#define GPS_RX_PIN 27
+#define GPS_TX_PIN 25
+
+#undef SCK_GPIO
+#define SCK_GPIO 18
+//#define MISO_GPIO 19 - already defined above
+#undef MOSI_GPIO
+#define MOSI_GPIO 23
+#undef NSS_GPIO
+#define NSS_GPIO 5
 
 #elif defined(TBEAM_V07)
 // This string must exactly match the case used in release file names or the android updater won't work
